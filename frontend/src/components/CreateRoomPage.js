@@ -10,11 +10,13 @@ import {
   RadioGroup,
   Radio,
 } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const CreateRoomPage = () => {
   const [canPause, setCanPause] = useState(true);
   const [votes, setVotes] = useState(2);
+
+  const navigate = useNavigate();
 
   const handleCreateRoomSubmit = (event) => {
     event.preventDefault();
@@ -32,7 +34,8 @@ const CreateRoomPage = () => {
 
     fetch("/api/v1/create-room", requestOptions)
       .then((resp) => resp.json())
-      .then((data) => console.log(data));
+      // .then((data) => console.log(data));
+      .then((data) => navigate(`/room/${data.code}`));
   };
 
   return (
