@@ -65,7 +65,7 @@ class CreateRoomView(APIView):
             self.request.session.create()
 
         serializer = self.serializer_class(data=request.data)
-        print(serializer)
+
         if serializer.is_valid():
             guest_can_pause = serializer.data.get("guest_can_pause")
             votes_to_skip = serializer.data.get("votes_to_skip")
@@ -83,6 +83,8 @@ class CreateRoomView(APIView):
                     ]
                 )
 
+                self.request.session["room_code"] = room.code
+
                 return Response(RoomSerializer(room).data, status=status.HTTP_200_OK)
 
             else:
@@ -93,10 +95,39 @@ class CreateRoomView(APIView):
                 )
                 room.save()
 
+                self.request.session["room_code"] = room.code
+
                 return Response(
                     RoomSerializer(room).data, status=status.HTTP_201_CREATED
                 )
 
         return Response(
             {"Bad Request": "Invalid data..."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class JoinRoomView(APIView):
+    def post(self, req, format=None):
+        if not self.request.session.exists(self.request.session.session_key):
+            self.request.session.create()
+
+        code = req.data.get("code")
+
+        if code != None:
+            queryset = Room.objects.filter(code=code)
+            if queryset.exists():
+                room = queryset[0]
+
+                self.request.session["room_code"] = room.code
+
+                return Response({"message": "Room Joined"}, status=status.HTTP_200_OK)
+
+            return Response(
+                {"Bad Request": "Room Does Not Exist"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"Bad Request": "Code Missing from POST Data"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
