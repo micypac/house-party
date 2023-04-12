@@ -17,7 +17,7 @@ const RoomPage = () => {
         setVotes(data.votes_to_skip);
         setIsHost(data.is_host);
       });
-  });
+  }, []);
 
   return (
     <div>
