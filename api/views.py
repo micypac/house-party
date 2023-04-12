@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .models import Room
-from .serializers import RoomSerializer, CreateRoomSerializer
+from .serializers import RoomSerializer, CreateRoomSerializer, UpdateRoomSerializer
 
 import sys
 
@@ -59,7 +59,7 @@ class RoomDetail(APIView):
         )
 
 
-class CreateRoomView(APIView):
+class CreateRoom(APIView):
     serializer_class = CreateRoomSerializer
 
     def post(self, request, format=None):
@@ -109,7 +109,7 @@ class CreateRoomView(APIView):
         )
 
 
-class JoinRoomView(APIView):
+class JoinRoom(APIView):
     def post(self, req, format=None):
         if not self.request.session.exists(self.request.session.session_key):
             self.request.session.create()
@@ -162,3 +162,43 @@ class LeaveRoom(APIView):
                 room.delete()
 
         return Response({"Message": "Success"}, status=status.HTTP_200_OK)
+
+
+class UpdateRoom(APIView):
+    serializer_class = UpdateRoomSerializer
+
+    def patch(self, req, format=None):
+        if not self.request.session.exists(self.request.session.session_key):
+            self.request.session.create()
+
+        serialized_data = self.serializer_class(data=req.data)
+
+        if serialized_data.is_valid():
+            code = serialized_data.data.get("code")
+            votes = serialized_data.data.get("votes_to_skip")
+            can_pause = serialized_data.data.get("guest_can_pause")
+
+            queryset = Room.objects.filter(code=code)
+            if queryset.exists():
+                room = queryset[0]
+                host_id = self.request.session.session_key
+
+                if room.host != host_id:
+                    return Response(
+                        {"Bad Request": "Permission Denied"},
+                        status=status.HTTP_401_UNAUTHORIZED,
+                    )
+
+                room.guest_can_pause = can_pause
+                room.votes_to_skip = votes
+
+                room.save(update_fields=["guest_can_pause", "votes_to_skip"])
+                return Response(RoomSerializer(room).data, status=status.HTTP_200_OK)
+
+            return Response(
+                {"Bad Request": "Room Not Found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(
+            {"Bad Request": "Invalid data..."}, status=status.HTTP_403_FORBIDDEN
+        )
