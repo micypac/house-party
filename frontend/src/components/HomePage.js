@@ -27,6 +27,10 @@ const HomePage = () => {
     //   });
   }, []);
 
+  const clearRoomCode = () => {
+    setRoomCode("");
+  };
+
   const content = (
     <Grid container spacing={3}>
       <Grid item xs={12} align="center">
@@ -57,7 +61,10 @@ const HomePage = () => {
         />
         <Route path="/create" element={<CreateRoomPage />} />
         <Route path="/join" element={<JoinRoomPage />} />
-        <Route path="/room/:roomCode" element={<RoomPage />} />
+        <Route
+          path="/room/:roomCode"
+          element={<RoomPage clearCode={() => clearRoomCode()} />}
+        />
       </Routes>
     </div>
   );
