@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from .models import Room
 from .serializers import RoomSerializer, CreateRoomSerializer
 
+import sys
+
 
 # class RoomList(generics.ListCreateAPIView):
 class RoomList(generics.ListAPIView):
@@ -121,7 +123,7 @@ class JoinRoomView(APIView):
 
                 self.request.session["room_code"] = room.code
 
-                return Response({"message": "Room Joined"}, status=status.HTTP_200_OK)
+                return Response({"Message": "Room Joined"}, status=status.HTTP_200_OK)
 
             return Response(
                 {"Bad Request": "Room Does Not Exist"},
@@ -137,9 +139,26 @@ class JoinRoomView(APIView):
 # check if user is 'in a room' by getting its session
 class UserInRoom(APIView):
     def get(self, req, format=None):
+        # print(f"Request Object: {self.request.__dict__}", file=sys.stderr)
         if not self.request.session.exists(self.request.session.session_key):
             self.request.session.create()
 
         data = {"code": self.request.session.get("room_code")}
 
         return JsonResponse(data, status=status.HTTP_200_OK)
+
+
+class LeaveRoom(APIView):
+    def post(self, req, format=None):
+        # if user is 'in room', leave room by removing room_code from its session
+        if "room_code" in self.request.session:
+            self.request.session.pop("room_code")
+
+            # delete room if user is room host
+            host_id = self.request.session.session_key
+            queryset = Room.objects.filter(host=host_id)
+            if queryset.exists():
+                room = queryset[0]
+                room.delete()
+
+        return Response({"Message": "Success"}, status=status.HTTP_200_OK)
