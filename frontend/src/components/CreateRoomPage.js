@@ -11,6 +11,7 @@ import {
   Radio,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
+import RoomFormPage from "./RoomFormPage";
 
 const CreateRoomPage = () => {
   const [canPause, setCanPause] = useState(true);
@@ -18,8 +19,8 @@ const CreateRoomPage = () => {
 
   const navigate = useNavigate();
 
-  const handleCreateRoomSubmit = (event) => {
-    event.preventDefault();
+  const handleCreateRoomSubmit = () => {
+    // event.preventDefault();
 
     const requestOptions = {
       method: "POST",
@@ -39,74 +40,27 @@ const CreateRoomPage = () => {
   };
 
   return (
-    <Grid container spacing={1}>
-      <Grid item xs={12} align="center">
-        <Typography component="h4" variant="h4">
-          Create A Room
-        </Typography>
-      </Grid>
-
-      <Grid item xs={12} align="center">
-        <FormControl component="fieldset">
-          <FormHelperText>
-            <div align="center">Guest Control of Playback State</div>
-          </FormHelperText>
-
-          <RadioGroup
-            row
-            defaultValue={canPause}
-            onChange={(e) => setCanPause(e.target.value)}
-          >
-            <FormControlLabel
-              value="true"
-              control={<Radio color="primary" />}
-              label="Play/Pause"
-              labelPlacement="bottom"
-            />
-            <FormControlLabel
-              value="false"
-              control={<Radio color="secondary" />}
-              label="No Control"
-              labelPlacement="bottom"
-            />
-          </RadioGroup>
-        </FormControl>
-      </Grid>
-
-      <Grid item xs={12} align="center">
-        <FormControl>
-          <TextField
-            required={true}
-            type="number"
-            inputProps={{
-              min: 1,
-              style: { textAlign: "center" },
-            }}
-            onChange={(e) => setVotes(e.target.value)}
-            defaultValue={votes}
-          />
-          <FormHelperText>
-            <div align="center">Votes Required To Skip Song</div>
-          </FormHelperText>
-        </FormControl>
-      </Grid>
-
+    <>
+      <RoomFormPage
+        mode="create"
+        canPause={canPause}
+        setCanPause={setCanPause}
+        votes={votes}
+        setVotes={setVotes}
+        handleSubmit={() => handleCreateRoomSubmit()}
+      />
       <Grid item xs={12} align="center">
         <Button
-          color="primary"
+          type="button"
+          color="secondary"
           variant="contained"
-          onClick={handleCreateRoomSubmit}
+          to="/"
+          component={Link}
         >
-          Create A Room
-        </Button>
-      </Grid>
-
-      <Grid item xs={12} align="center">
-        <Button color="secondary" variant="contained" to="/" component={Link}>
           Back
         </Button>
       </Grid>
-    </Grid>
+    </>
   );
 };
 
