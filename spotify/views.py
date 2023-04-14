@@ -10,9 +10,6 @@ from datetime import timedelta
 from .models import SpotifyToken
 
 
-print(f"Client ID: {settings.SPOTIFY_CLIENT_ID}")
-
-
 class GetAuthURL(APIView):
     def get(self, req, format=None):
         scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing"
@@ -48,10 +45,10 @@ class IsAuthenticated(APIView):
                 resp = post(
                     "https://accounts.spotify.com/api/token",
                     data={
-                        "client_id": settings.SPOTIFY_CLIENT_ID,
-                        "client_secret": settings.SPOTIFY_CLIENT_SECRET,
                         "grant_type": "refresh_token",
                         "refresh_token": refresh_token,
+                        "client_id": settings.SPOTIFY_CLIENT_ID,
+                        "client_secret": settings.SPOTIFY_CLIENT_SECRET,
                     },
                 ).json()
 

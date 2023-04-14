@@ -11,6 +11,7 @@ const RoomPage = ({ clearCode }) => {
   const [isHost, setIsHost] = useState(false);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [spotifyAuth, setSpotifyAuth] = useState(false);
 
   const match = useMatch("/room/:roomCode");
   const roomCode = match.params.roomCode;
@@ -18,21 +19,44 @@ const RoomPage = ({ clearCode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`/api/v1/get-room/${roomCode}`)
-      .then((resp) => {
-        if (!resp.ok) {
-          clearCode();
-          navigate("/");
-        }
+    const fetchRoomData = async () => {
+      const resp = await fetch(`/api/v1/get-room/${roomCode}`);
+      if (!resp.ok) {
+        clearCode();
+        navigate("/");
+      }
 
-        return resp.json();
-      })
-      .then((data) => {
-        setCanPause(data.guest_can_pause);
-        setVotes(data.votes_to_skip);
-        setIsHost(data.is_host);
-      });
+      const data = await resp.json();
+
+      setCanPause(data.guest_can_pause);
+      setVotes(data.votes_to_skip);
+      setIsHost(data.is_host);
+    };
+
+    fetchRoomData().catch(console.error);
   }, []);
+
+  useEffect(() => {
+    console.log(`isHost: ${isHost}`);
+
+    if (isHost) {
+      authenticateSpotify();
+    }
+  }, [isHost]);
+
+  const authenticateSpotify = async () => {
+    let resp = await fetch("/spotify/is-authenticated");
+    let data = await resp.json();
+
+    setSpotifyAuth(data.status);
+    console.log(`Spotify Auth: ${spotifyAuth}`);
+
+    if (!data.status) {
+      resp = await fetch("/spotify/get-auth-url");
+      data = await resp.json();
+      window.location.replace(data.url);
+    }
+  };
 
   const handleLeaveRoomSubmit = async (event) => {
     event.preventDefault();
