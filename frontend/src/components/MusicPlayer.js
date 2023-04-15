@@ -31,6 +31,15 @@ const MusicPlayer = ({ song }) => {
     fetch("/spotify/pause", reqOptions);
   };
 
+  const handleSkipSubmit = () => {
+    const reqOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    };
+
+    fetch("/spotify/skip", reqOptions);
+  };
+
   return (
     <Card>
       <Grid container spacing={1}>
@@ -53,7 +62,7 @@ const MusicPlayer = ({ song }) => {
             >
               {song.is_playing ? <PauseIcon /> : <PlayArrowIcon />}
             </IconButton>
-            <IconButton>
+            <IconButton onClick={() => handleSkipSubmit()}>
               <SkipNextIcon />
             </IconButton>
           </div>
