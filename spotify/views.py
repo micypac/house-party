@@ -8,6 +8,9 @@ from requests import Request, get, post, put
 from datetime import timedelta
 
 from .models import SpotifyToken
+from api.models import Room
+
+from .utils import invoke_spotify_api_req
 
 
 class GetAuthURL(APIView):
@@ -109,3 +112,53 @@ def auth_callback(request, format=None):
     )
 
     return redirect("frontend:home")
+
+
+class CurrentSong(APIView):
+    def get(self, req):
+        room_code = self.request.session.get("room_code")
+        queryset = Room.objects.filter(code=room_code)
+        if queryset.exists():
+            room = queryset[0]
+        else:
+            return Response(
+                {"Bad Request": "Room Not Found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        host = room.host
+        endpoint = "/player/currently-playing"
+
+        resp = invoke_spotify_api_req(host, endpoint)
+
+        if "error" in resp or "item" not in resp:
+            return Response(
+                {"Bad Request": "No Content"}, status=status.HTTP_204_NO_CONTENT
+            )
+
+        item = resp.get("item")
+        song_id = item.get("id")
+        album_cover = item.get("album").get("images")[0].get("url")
+        duration = item.get("duration_ms")
+        progress = resp.get("progress_ms")
+        is_playing = resp.get("is_playing")
+
+        artists_text = ""
+
+        for i, artist in enumerate(item.get("artists")):
+            if i > 0:
+                artists_text += ", "
+            name = artist.get("name")
+            artists_text += name
+
+        song = {
+            "title": item.get("name"),
+            "artist": artists_text,
+            "duration": duration,
+            "time": progress,
+            "img_url": album_cover,
+            "is_playing": is_playing,
+            "votes": 0,
+            "id": song_id,
+        }
+
+        return Response(song, status=status.HTTP_200_OK)
