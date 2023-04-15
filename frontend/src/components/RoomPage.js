@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useMatch, useNavigate } from "react-router-dom";
 import { Grid, Button, Typography } from "@mui/material";
 import RoomFormPage from "./RoomFormPage";
+import MusicPlayer from "./MusicPlayer";
 
 const RoomPage = ({ clearCode }) => {
   const [canPause, setCanPause] = useState(false);
@@ -12,6 +13,7 @@ const RoomPage = ({ clearCode }) => {
 
   const [showSettings, setShowSettings] = useState(false);
   const [spotifyAuth, setSpotifyAuth] = useState(false);
+  const [song, setSong] = useState({});
 
   const match = useMatch("/room/:roomCode");
   const roomCode = match.params.roomCode;
@@ -39,24 +41,44 @@ const RoomPage = ({ clearCode }) => {
   useEffect(() => {
     console.log(`isHost: ${isHost}`);
 
+    const authenticateSpotify = async () => {
+      let resp = await fetch("/spotify/is-authenticated");
+      let data = await resp.json();
+
+      setSpotifyAuth(data.status);
+      console.log(`Spotify Auth: ${spotifyAuth}`);
+
+      if (!data.status) {
+        resp = await fetch("/spotify/get-auth-url");
+        data = await resp.json();
+        window.location.replace(data.url);
+      }
+    };
+
     if (isHost) {
       authenticateSpotify();
     }
   }, [isHost]);
 
-  const authenticateSpotify = async () => {
-    let resp = await fetch("/spotify/is-authenticated");
-    let data = await resp.json();
+  useEffect(() => {
+    const getCurrentSong = async () => {
+      const resp = await fetch("/spotify/current-song");
+      if (!resp.ok) {
+        return {};
+      }
 
-    setSpotifyAuth(data.status);
-    console.log(`Spotify Auth: ${spotifyAuth}`);
+      const data = await resp.json();
 
-    if (!data.status) {
-      resp = await fetch("/spotify/get-auth-url");
-      data = await resp.json();
-      window.location.replace(data.url);
-    }
-  };
+      setSong(data);
+    };
+
+    const fetchInterval = setInterval(getCurrentSong, 1000);
+
+    return () => {
+      console.log("Clearing Get Song Interval");
+      clearInterval(fetchInterval);
+    };
+  }, []);
 
   const handleLeaveRoomSubmit = async (event) => {
     event.preventDefault();
@@ -110,21 +132,8 @@ const RoomPage = ({ clearCode }) => {
           Room Code: {roomCode}
         </Typography>
       </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" component="h6">
-          Votes: {votes}
-        </Typography>
-      </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" component="h6">
-          Guest Can Pause: {canPause.toString()}
-        </Typography>
-      </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" component="h6">
-          Host: {isHost.toString()}
-        </Typography>
-      </Grid>
+
+      <MusicPlayer song={song} />
 
       {!isHost ? null : (
         <Grid item xs={12} align="center">
