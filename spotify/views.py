@@ -10,7 +10,7 @@ from datetime import timedelta
 from .models import SpotifyToken
 from api.models import Room
 
-from .utils import invoke_spotify_api_req
+from .utils import invoke_spotify_api_req, play_song, pause_song
 
 
 class GetAuthURL(APIView):
@@ -57,7 +57,6 @@ class IsAuthenticated(APIView):
 
                 resp_token_type = resp.get("token_type")
                 resp_acc_token = resp.get("access_token")
-                resp_ref_token = resp.get("refresh_token")
                 resp_exp_in = resp.get("expires_in")
 
                 converted_exp_in = timezone.now() + timedelta(seconds=resp_exp_in)
@@ -162,3 +161,31 @@ class CurrentSong(APIView):
         }
 
         return Response(song, status=status.HTTP_200_OK)
+
+
+class PlaySong(APIView):
+    def put(self, req, format=None):
+        room_code = self.request.session.get("room_code")
+        room = Room.objects.filter(code=room_code)[0]
+
+        if self.request.session.session_key == room.host or room.guest_can_pause:
+            play_song(room.host)
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+        return Response(
+            {"Bad Request": "Unauthorized Control"}, status=status.HTTP_403_FORBIDDEN
+        )
+
+
+class PauseSong(APIView):
+    def put(self, req, format=None):
+        room_code = self.request.session.get("room_code")
+        room = Room.objects.filter(code=room_code)[0]
+
+        if self.request.session.session_key == room.host or room.guest_can_pause:
+            pause_song(room.host)
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+        return Response(
+            {"Bad Request": "Unauthorized Control"}, status=status.HTTP_403_FORBIDDEN
+        )
