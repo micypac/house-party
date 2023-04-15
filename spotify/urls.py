@@ -6,6 +6,7 @@ from .views import (
     CurrentSong,
     PlaySong,
     PauseSong,
+    SkipSong,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path("current-song", CurrentSong.as_view(), name="curr_song"),
     path("play", PlaySong.as_view(), name="play_song"),
     path("pause", PauseSong.as_view(), name="pause_song"),
+    path("skip", SkipSong.as_view(), name="skip_song"),
 ]

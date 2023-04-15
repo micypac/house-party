@@ -12,6 +12,10 @@ def pause_song(session_id):
     return invoke_spotify_api_req(session_id, "/player/pause", _put=True)
 
 
+def skip_song(session_id):
+    return invoke_spotify_api_req(session_id, "/player/next", _post=True)
+
+
 def invoke_spotify_api_req(session_id, endpoint, _post=False, _put=False):
     queryset = SpotifyToken.objects.filter(user=session_id)
     if queryset.exists():
